@@ -128,7 +128,7 @@ export default function ScratchReveal({ onRevealed }) {
           if (entry.isIntersecting && !isRevealed) {
             timerRef.current = setTimeout(() => {
               revealFull();
-            }, 5000);
+            }, 8500);
           } else {
             if (timerRef.current) clearTimeout(timerRef.current);
           }
