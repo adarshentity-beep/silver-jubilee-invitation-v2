@@ -1,21 +1,41 @@
 import React, { useRef, useEffect, useState } from 'react';
 import confetti from 'canvas-confetti';
+import { Calendar, Sparkles, Check, Heart, Wine } from 'lucide-react';
 import { EVENT } from '../config/event';
 
 export default function ScratchReveal({ onRevealed }) {
   const canvasRef = useRef(null);
   const containerRef = useRef(null);
   const [isRevealed, setIsRevealed] = useState(false);
+  const [isAddedToCalendar, setIsAddedToCalendar] = useState(false);
   const isDrawing = useRef(false);
   const timerRef = useRef(null);
 
   const triggerCelebrationBurst = () => {
-    confetti({
-      particleCount: 80,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#ffffff', '#cbd5e1', '#94a3b8', '#e2e8f0'],
-    });
+    // Multi-directional silver and white confetti burst
+    const end = Date.now() + 1000;
+    const colors = ['#ffffff', '#cbd5e1', '#94a3b8', '#e2e8f0', '#f8fafc'];
+
+    (function frame() {
+      confetti({
+        particleCount: 6,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0, y: 0.6 },
+        colors: colors,
+      });
+      confetti({
+        particleCount: 6,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1, y: 0.6 },
+        colors: colors,
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    })();
   };
 
   const revealFull = () => {
@@ -23,6 +43,16 @@ export default function ScratchReveal({ onRevealed }) {
     setIsRevealed(true);
     triggerCelebrationBurst();
     if (onRevealed) onRevealed();
+  };
+
+  const handleAddToCalendar = () => {
+    const title = encodeURIComponent(`25th Anniversary Celebration - ${EVENT.groom || 'Ramu'} & ${EVENT.bride || 'Beena'}`);
+    const details = encodeURIComponent("Silver Jubilee Celebration.");
+    const location = encodeURIComponent(EVENT.location || "Odisha · Barbil");
+    const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=20261227T120000Z/20261227T180000Z&details=${details}&location=${location}`;
+
+    window.open(googleCalendarUrl, '_blank');
+    setIsAddedToCalendar(true);
   };
 
   useEffect(() => {
@@ -35,19 +65,35 @@ export default function ScratchReveal({ onRevealed }) {
       canvas.width = rect.width;
       canvas.height = rect.height;
 
-      // Restored original metallic silver layer
+      // Premium Multi-Stop Brushed Metallic Silver Layer
       const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
       gradient.addColorStop(0, '#cbd5e1');
-      gradient.addColorStop(0.5, '#ffffff');
-      gradient.addColorStop(1, '#94a3b8');
+      gradient.addColorStop(0.25, '#f8fafc');
+      gradient.addColorStop(0.5, '#94a3b8');
+      gradient.addColorStop(0.75, '#e2e8f0');
+      gradient.addColorStop(1, '#64748b');
 
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      ctx.font = 'bold 14px sans-serif';
+      // Fine Silver Glitter Speckles
+      for (let i = 0; i < 250; i++) {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        const size = Math.random() * 1.5 + 0.5;
+        const alpha = Math.random() * 0.5 + 0.2;
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
+        ctx.beginPath();
+        ctx.arc(x, y, size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Elegant Center Scratch Hint Text
+      ctx.font = 'bold 13px sans-serif';
       ctx.fillStyle = '#0f172a';
       ctx.textAlign = 'center';
-      ctx.fillText('SCRATCH TO REVEAL DATE', canvas.width / 2, canvas.height / 2);
+      ctx.textBaseline = 'middle';
+      ctx.fillText('✨ SCRATCH OR WAIT TO REVEAL ✨', canvas.width / 2, canvas.height / 2);
     };
 
     setCanvasSize();
@@ -57,17 +103,15 @@ export default function ScratchReveal({ onRevealed }) {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting && !isRevealed) {
-            // Start 5-second timer only once page 2 is active on screen
             timerRef.current = setTimeout(() => {
               revealFull();
             }, 5000);
           } else {
-            // Clear timer if user scrolls away before 5 sec
             if (timerRef.current) clearTimeout(timerRef.current);
           }
         });
       },
-      { threshold: 0.5 } // Requires at least 50% of the scratch page to be visible
+      { threshold: 0.5 }
     );
 
     if (containerRef.current) {
@@ -119,22 +163,44 @@ export default function ScratchReveal({ onRevealed }) {
   return (
     <section
       ref={containerRef}
-      className="relative min-h-[100svh] w-full flex flex-col items-center justify-center p-6 text-center z-10"
+      className="relative min-h-[100svh] w-full flex flex-col items-center justify-center p-6 text-center z-10 overflow-hidden"
     >
-      <p className="font-editorial italic text-base md:text-2xl text-slate-300 mb-6">
+      {/* Floating Transition Sparkles (Emerge gently after reveal) */}
+      {isRevealed && (
+        <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden transition-opacity duration-1000 opacity-100">
+          {[...Array(12)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute rounded-full bg-white shadow-[0_0_10px_#ffffff] animate-pulse"
+              style={{
+                width: `${(i % 3) + 3}px`,
+                height: `${(i % 3) + 3}px`,
+                top: `${(i * 17) % 90 + 5}%`,
+                left: `${(i * 23) % 90 + 5}%`,
+                animationDuration: `${(i % 2) + 2}s`,
+                animationDelay: `${i * 0.1}s`,
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      <p className="font-editorial italic text-base md:text-2xl text-slate-300 mb-6 drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
         "25 years. One beautiful journey."
       </p>
 
-      <div className="w-full max-w-xl bg-slate-900/80 border border-slate-400/40 rounded-3xl p-6 md:p-10 shadow-[0_0_60px_rgba(226,232,240,0.15)] backdrop-blur-xl space-y-6">
+      <div className="w-full max-w-xl bg-slate-900/80 border border-slate-300/40 rounded-3xl p-6 md:p-10 shadow-[0_0_60px_rgba(226,232,240,0.2)] backdrop-blur-xl space-y-6 relative">
         <p className="font-serif-luxury text-sm md:text-base tracking-[0.3em] text-slate-300 uppercase">
           SAVE THE DATE
         </p>
 
-        <div className="relative min-h-[180px] flex items-center justify-center rounded-2xl bg-slate-950 border border-slate-800 p-6 overflow-hidden">
-          <div className="space-y-2">
+        <div className="relative min-h-[180px] flex items-center justify-center rounded-2xl bg-slate-950 border border-slate-800 p-6 overflow-hidden shadow-inner">
+          <div className="space-y-2 z-10">
             <h3
-              className={`font-serif-luxury text-3xl md:text-6xl font-extrabold text-silver-metallic transition-all duration-700 ${
-                isRevealed ? 'scale-105 drop-shadow-[0_0_25px_rgba(255,255,255,0.8)]' : ''
+              className={`font-serif-luxury text-3xl md:text-6xl font-extrabold text-silver-metallic transition-all duration-1000 ${
+                isRevealed
+                  ? 'scale-105 drop-shadow-[0_0_35px_rgba(255,255,255,0.95)]'
+                  : ''
               }`}
             >
               {EVENT.date}
@@ -145,20 +211,66 @@ export default function ScratchReveal({ onRevealed }) {
           </div>
 
           {!isRevealed && (
-            <canvas
-              ref={canvasRef}
-              className="absolute inset-0 w-full h-full cursor-pointer touch-none z-20 rounded-2xl"
-              onMouseDown={() => (isDrawing.current = true)}
-              onMouseUp={() => (isDrawing.current = false)}
-              onMouseMove={(e) => isDrawing.current && scratch(e)}
-              onTouchMove={scratch}
-            />
+            <div className="absolute inset-0 z-20 overflow-hidden rounded-2xl">
+              <canvas
+                ref={canvasRef}
+                className="w-full h-full cursor-pointer touch-none"
+                onMouseDown={() => (isDrawing.current = true)}
+                onMouseUp={() => (isDrawing.current = false)}
+                onMouseMove={(e) => isDrawing.current && scratch(e)}
+                onTouchMove={scratch}
+              />
+              <div className="absolute top-0 bottom-0 w-24 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-[-25deg] pointer-events-none animate-[shine_3.5s_infinite_ease-in-out]" />
+            </div>
           )}
         </div>
 
-        <p className="text-xs md:text-sm text-slate-400 tracking-wider">
+        <p className="text-xs md:text-sm text-slate-300 tracking-wider">
           {isRevealed ? "✨ Here's to 25 beautiful years!" : "Scratch to reveal the date"}
         </p>
+
+        {/* Smooth 1-Second Cinematic Fade & Slide-In for Calendar Button & Final Celebration Prompt */}
+        <div
+          className={`transition-all duration-1000 ease-out transform ${
+            isRevealed
+              ? 'opacity-100 translate-y-0 scale-100'
+              : 'opacity-0 translate-y-6 scale-95 pointer-events-none'
+          }`}
+        >
+          <div className="pt-2 flex flex-col items-center space-y-5">
+            <button
+              onClick={handleAddToCalendar}
+              className="flex items-center space-x-2.5 px-6 py-2.5 rounded-full bg-slate-950 border border-slate-300/50 text-slate-100 hover:text-white hover:border-white shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] transition-all duration-300 text-xs md:text-sm font-medium tracking-wider uppercase backdrop-blur-md cursor-pointer"
+            >
+              {isAddedToCalendar ? (
+                <>
+                  <Check className="w-4 h-4 text-emerald-400" />
+                  <span>Added To Calendar</span>
+                </>
+              ) : (
+                <>
+                  <Calendar className="w-4 h-4 text-slate-200" />
+                  <span>Add To Calendar</span>
+                  <Sparkles className="w-3.5 h-3.5 text-slate-300 opacity-80" />
+                </>
+              )}
+            </button>
+
+            {/* Final Celebration Section Banner */}
+            <div className="pt-4 border-t border-slate-700/50 w-full flex flex-col items-center space-y-2">
+              <div className="flex items-center space-x-3 text-slate-300">
+                <Wine className="w-4 h-4 text-slate-200" />
+                <span className="font-serif-luxury text-xs tracking-[0.25em] uppercase text-slate-200">
+                  Join Us In Celebration
+                </span>
+                <Heart className="w-4 h-4 text-slate-200 fill-slate-200/20" />
+              </div>
+              <p className="text-[11px] md:text-xs text-slate-400 font-light tracking-wide italic">
+                We look forward to celebrating this silver milestone with you.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
   );
