@@ -27,7 +27,7 @@ export default function App() {
           behavior: 'smooth',
         });
       }
-    }, 8500);
+    }, 6000);
   };
 
   useEffect(() => {
