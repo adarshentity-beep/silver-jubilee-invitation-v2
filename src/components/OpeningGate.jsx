@@ -2,34 +2,9 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Sparkles, KeyRound, Wine, PartyPopper } from 'lucide-react';
 import { EVENT } from '../config/event';
+import { startBackgroundMusic } from '../../utils/audio';
 
 // Module-level audio instance to persist background music across component unmounts
-let bgAudio = null;
-
-const startBackgroundMusic = (delayMs = 1200) => {
-  if (!bgAudio) {
-    bgAudio = new Audio('/background-music.mp3');
-    bgAudio.loop = true;
-    bgAudio.volume = 0; // Start muted for smooth fade-in
-  }
-
-  // Pre-trigger inside click context to allow audio permission
-  bgAudio.play().then(() => {
-    // Delay the audible volume fade-in until the core light dims & screen reveals (~1.2s)
-    setTimeout(() => {
-      const targetVolume = 0.4; // Comfortable background volume
-      const fadeInterval = setInterval(() => {
-        if (bgAudio.volume < targetVolume) {
-          bgAudio.volume = Math.min(bgAudio.volume + targetVolume / 15, targetVolume);
-        } else {
-          clearInterval(fadeInterval);
-        }
-      }, 100);
-    }, delayMs);
-  }).catch((err) => {
-    console.error("Audio playback error:", err);
-  });
-};
 
 export default function OpeningGate({ onOpen }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -43,7 +18,7 @@ export default function OpeningGate({ onOpen }) {
     whoosh.play().catch((err) => console.warn("Whoosh play prevented:", err));
 
     // 2. Queue background music to fade in right as central light dims (~1200ms)
-    startBackgroundMusic(1200);
+    startBackgroundMusic();
 
     setIsOpen(true);
     setTimeout(() => {
@@ -205,7 +180,7 @@ export default function OpeningGate({ onOpen }) {
           {/* Text Below - Remains Static & Readable */}
           <div className="mt-6 space-y-2 pointer-events-none">
             <p className="font-serif-luxury text-lg md:text-3xl tracking-[0.3em] text-white uppercase font-bold text-silver-glow drop-shadow-[0_0_20px_rgba(255,255,255,1)]">
-              CLICK TO REVEAL INVITATION
+              CLICK TO REVEAL DATE
             </p>
             <p className="text-xs md:text-base text-slate-200 tracking-widest uppercase italic font-light drop-shadow-[0_0_5px_rgba(255,255,255,0.5)]">
               "Some stories are meant to be celebrated."

@@ -63,7 +63,7 @@ export default function HeroScene() {
         transition={{ delay: 1, duration: 1 }}
         className="font-editorial italic text-sm md:text-xl text-slate-300 mt-6 tracking-wider"
       >
-        "25 years of love, laughter & togetherness."
+        “Forever begins again.”
       </motion.p>
     </section>
   );

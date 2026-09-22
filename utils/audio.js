@@ -1,24 +1,113 @@
-// utils/audio.js
-let bgMusic = null;
+let backgroundAudio = null;
+let isMuted = false;
 
-export const playBackgroundMusic = (src = '/background-music.mp3', targetVolume = 0.4) => {
-  if (!bgMusic) {
-    bgMusic = new Audio(src);
-    bgMusic.loop = true;
-    bgMusic.volume = 0; // Start muted for smooth fade-in
+function getBackgroundAudio() {
+  if (!backgroundAudio) {
+    backgroundAudio = new Audio('/background-music.mp3');
+    backgroundAudio.loop = true;
+    backgroundAudio.preload = 'auto';
+    backgroundAudio.volume = 0.28;
+    backgroundAudio.muted = false;
   }
 
-  // User click gesture fulfills browser autoplay requirements
-  bgMusic.play().then(() => {
-    // Fade-in over ~1.5 seconds (15 steps of 100ms)
-    const fadeInterval = setInterval(() => {
-      if (bgMusic.volume < targetVolume) {
-        bgMusic.volume = Math.min(bgMusic.volume + targetVolume / 15, targetVolume);
-      } else {
-        clearInterval(fadeInterval);
+  return backgroundAudio;
+}
+
+export async function startBackgroundMusic(delayMs = 1200) {
+  const audio = getBackgroundAudio();
+
+  if (isMuted || document.hidden) return;
+
+  setTimeout(async () => {
+    // Check again after the delay in case the user muted
+    // or switched tabs during those 1200ms.
+    if (isMuted || document.hidden) return;
+
+    try {
+      if (audio.paused) {
+        await audio.play();
       }
-    }, 100);
-  }).catch((err) => {
-    console.warn("Audio play prevented:", err);
-  });
-};
+    } catch (error) {
+      console.log('Background music could not start:', error);
+    }
+  }, delayMs);
+}
+
+export function muteBackgroundMusic() {
+  isMuted = true;
+
+  const audio = getBackgroundAudio();
+  audio.muted = true;
+  audio.pause();
+
+  window.dispatchEvent(new Event('background-audio-state'));
+}
+
+export async function unmuteBackgroundMusic() {
+  isMuted = false;
+
+  const audio = getBackgroundAudio();
+  audio.muted = false;
+
+  if (document.hidden) return;
+
+  try {
+    await audio.play();
+  } catch (error) {
+    console.log('Background music could not resume:', error);
+  }
+
+  window.dispatchEvent(new Event('background-audio-state'));
+}
+
+export function isBackgroundMusicMuted() {
+  return isMuted;
+}
+
+export function setupAudioVisibilityHandling(onMute) {
+  const handleVisibilityChange = () => {
+    const audio = getBackgroundAudio();
+
+    if (document.hidden) {
+      audio.pause();
+      audio.muted = true;
+      isMuted = true;
+
+      if (onMute) {
+        onMute(true);
+      }
+
+      window.dispatchEvent(new Event('background-audio-state'));
+    }
+  };
+
+  const handlePageHide = () => {
+    const audio = getBackgroundAudio();
+
+    audio.pause();
+    audio.muted = true;
+    isMuted = true;
+  };
+
+  document.addEventListener(
+    'visibilitychange',
+    handleVisibilityChange
+  );
+
+  window.addEventListener(
+    'pagehide',
+    handlePageHide
+  );
+
+  return () => {
+    document.removeEventListener(
+      'visibilitychange',
+      handleVisibilityChange
+    );
+
+    window.removeEventListener(
+      'pagehide',
+      handlePageHide
+    );
+  };
+}

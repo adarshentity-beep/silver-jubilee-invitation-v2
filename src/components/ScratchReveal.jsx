@@ -10,9 +10,9 @@ export default function ScratchReveal({ onRevealed }) {
   const [isAddedToCalendar, setIsAddedToCalendar] = useState(false);
   const isDrawing = useRef(false);
   const timerRef = useRef(null);
+  const scrollTimerRef = useRef(null); // 👈 Timer for delayed auto-scroll
 
   const triggerCelebrationBurst = () => {
-    // Multi-directional silver and white confetti burst
     const end = Date.now() + 1000;
     const colors = ['#ffffff', '#cbd5e1', '#94a3b8', '#e2e8f0', '#f8fafc'];
 
@@ -38,11 +38,38 @@ export default function ScratchReveal({ onRevealed }) {
     })();
   };
 
+  const scrollToNext = () => {
+    // 1. Try finding the next sibling element in the container
+    if (containerRef.current && containerRef.current.nextElementSibling) {
+      containerRef.current.nextElementSibling.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+      return;
+    }
+
+    // 2. Fallback: Find the parent scroll container and scroll down one full screen height
+    const scrollParent = containerRef.current?.closest('.overflow-y-auto');
+    if (scrollParent) {
+      scrollParent.scrollBy({
+        top: window.innerHeight,
+        behavior: 'smooth',
+      });
+    } else {
+      // 3. Final fallback to window scroll
+      window.scrollBy({
+        top: window.innerHeight,
+        behavior: 'smooth',
+      });
+    }
+  };
+
   const revealFull = () => {
     if (isRevealed) return;
     setIsRevealed(true);
     triggerCelebrationBurst();
     if (onRevealed) onRevealed();
+    // No automatic scroll timer here! It stays completely still.
   };
 
   const handleAddToCalendar = () => {
@@ -65,7 +92,6 @@ export default function ScratchReveal({ onRevealed }) {
       canvas.width = rect.width;
       canvas.height = rect.height;
 
-      // Premium Multi-Stop Brushed Metallic Silver Layer
       const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
       gradient.addColorStop(0, '#cbd5e1');
       gradient.addColorStop(0.25, '#f8fafc');
@@ -76,7 +102,6 @@ export default function ScratchReveal({ onRevealed }) {
       ctx.fillStyle = gradient;
       ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-      // Fine Silver Glitter Speckles
       for (let i = 0; i < 250; i++) {
         const x = Math.random() * canvas.width;
         const y = Math.random() * canvas.height;
@@ -88,7 +113,6 @@ export default function ScratchReveal({ onRevealed }) {
         ctx.fill();
       }
 
-      // Elegant Center Scratch Hint Text
       ctx.font = 'bold 13px sans-serif';
       ctx.fillStyle = '#0f172a';
       ctx.textAlign = 'center';
@@ -98,7 +122,6 @@ export default function ScratchReveal({ onRevealed }) {
 
     setCanvasSize();
 
-    // IntersectionObserver to start timer ONLY when user arrives on this 2nd page section
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
@@ -120,6 +143,7 @@ export default function ScratchReveal({ onRevealed }) {
 
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
+      if (scrollTimerRef.current) clearTimeout(scrollTimerRef.current);
       if (containerRef.current) observer.unobserve(containerRef.current);
     };
   }, [isRevealed]);
@@ -165,7 +189,6 @@ export default function ScratchReveal({ onRevealed }) {
       ref={containerRef}
       className="relative min-h-[100svh] w-full flex flex-col items-center justify-center p-6 text-center z-10 overflow-hidden"
     >
-      {/* Floating Transition Sparkles (Emerge gently after reveal) */}
       {isRevealed && (
         <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden transition-opacity duration-1000 opacity-100">
           {[...Array(12)].map((_, i) => (
@@ -190,9 +213,7 @@ export default function ScratchReveal({ onRevealed }) {
       </p>
 
       <div className="w-full max-w-xl bg-slate-900/80 border border-slate-300/40 rounded-3xl p-6 md:p-10 shadow-[0_0_60px_rgba(226,232,240,0.2)] backdrop-blur-xl space-y-6 relative">
-        <p className="font-serif-luxury text-sm md:text-base tracking-[0.3em] text-slate-300 uppercase">
-          SAVE THE DATE
-        </p>
+        <p className="text-amber-300 font-bold tracking-[0.3em] text-lg uppercase drop-shadow-[0_0_12px_rgba(252,211,77,0.8)]">SAVE THE DATE</p>
 
         <div className="relative min-h-[180px] flex items-center justify-center rounded-2xl bg-slate-950 border border-slate-800 p-6 overflow-hidden shadow-inner">
           <div className="space-y-2 z-10">
@@ -229,7 +250,6 @@ export default function ScratchReveal({ onRevealed }) {
           {isRevealed ? "✨ Here's to 25 beautiful years!" : "Scratch to reveal the date"}
         </p>
 
-        {/* Smooth 1-Second Cinematic Fade & Slide-In for Calendar Button & Final Celebration Prompt */}
         <div
           className={`transition-all duration-1000 ease-out transform ${
             isRevealed
@@ -256,12 +276,19 @@ export default function ScratchReveal({ onRevealed }) {
               )}
             </button>
 
-            {/* Final Celebration Section Banner */}
+            <button
+              onClick={scrollToNext}
+              className="animate-bounce text-[11px] md:text-xs tracking-[0.2em] uppercase text-amber-300/90 hover:text-amber-200 flex items-center space-x-1.5 pt-1 cursor-pointer transition-colors mx-auto"
+            >
+              <span>Continue to Next Section</span>
+              <span>↓</span>
+            </button>
+
             <div className="pt-4 border-t border-slate-700/50 w-full flex flex-col items-center space-y-2">
               <div className="flex items-center space-x-3 text-slate-300">
                 <Wine className="w-4 h-4 text-slate-200" />
                 <span className="font-serif-luxury text-xs tracking-[0.25em] uppercase text-slate-200">
-                  Join Us In Celebration
+                  LET’S CELEBRATE TOGETHER
                 </span>
                 <Heart className="w-4 h-4 text-slate-200 fill-slate-200/20" />
               </div>
